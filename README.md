@@ -4,7 +4,7 @@
 
 Scalaを使い、機械学習の基礎的なアルゴリズムを実装するプロジェクト
 
-基本的には、Python実装である[ml-dlリポジトリ](https://github.com/amenoyoya/ml-dl)の[4.基礎理論](https://github.com/amenoyoya/ml-dl/4.基礎理論)の内容を反映している
+基本的には、Python実装である[ml-dlリポジトリ](https://github.com/amenoyoya/ml-dl)の[4.基礎理論](https://github.com/amenoyoya/ml-dl/tree/master/4.基礎理論)の内容を反映している
 
 ***
 
