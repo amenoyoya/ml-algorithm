@@ -1,10 +1,29 @@
-# Scalaによる機械学習実装
+# 一から学ぶ機械学習アルゴリズム
 
 ## What's this?
 
-Scalaを使い、機械学習の基礎的なアルゴリズムを実装するプロジェクト
+Juliaを使い、機械学習の基礎的なアルゴリズムを実装するプロジェクト
 
-基本的には、Python実装である[ml-dlリポジトリ](https://github.com/amenoyoya/ml-dl)の[4.基礎理論](https://github.com/amenoyoya/ml-dl/tree/master/4.基礎理論)の内容を反映している
+### What's Julia?
+- **JUlia(ジュリア)**
+    - 汎用プログラミング言語水準から高度の計算科学や数値解析水準まで対処するよう設計された高水準言語かつ仕様記述言語、及び動的プログラミング言語
+    - 標準ライブラリがJulia自身により作成されており、コア言語は極めてコンパクト
+    - オブジェクトの構築または記述する型の種類が豊富にある
+    - マルチディスパッチにより、引数の型の多くの組み合わせに対して関数の動作を定義することが可能
+    - 異なる引数の型の効率的な特殊コードの自動生成が可能
+    - C言語のような静的にコンパイルされた言語を使用しているかのような高いパフォーマンスを発揮する
+    - フリーオープンソース（MITライセンス）
+    - ユーザ定義の型は既存の型と同じくらい早くコンパクト
+    - 非ベクトル化コード処理が早いため、パフォーマンス向上のためにコードをベクトル化する必要がない
+    - 並列処理と分散計算ができるよう設計
+    - 軽く「エコ」なスレッド（コルーチン）
+    - 控えめでありながら処理能力が高いシステム
+    - 簡潔かつ拡張可能な数値および他のデータ型のための変換と推進
+    - 効率的なUnicodeへの対応（UTF-8を含む）
+    - C関数を直接呼び出すことが可能（ラッパーや特別なAPIは不要）
+    - 他のプロセスを管理するための処理能力が高いシェルに似た機能
+    - Lispに似たマクロや他のメタプログラミング機能
+
 
 ***
 
@@ -12,72 +31,73 @@ Scalaを使い、機械学習の基礎的なアルゴリズムを実装するプ
 
 ### Environment
 - OS:
-    - Windows 10 x64
-- JavaVM:
-    - OracleJDK: `12.0.1`
-- Scala:
-    - sbt: `2.12.7`
+    - Ubuntu 18.04 LTS
+    - Windows 10 Pro
+- Jupyter Notebook: `4.4.0`
+    - Anaconda: `4.5.11`
+        - Python: `3.7.4`
+- Julia: `1.1.1`
 
 ---
 
-### Javaのインストール
-- 現時点で最新の12系を[OpenJDK公式サイト](http://jdk.java.net/12/)からダウンロードしてくる
-- `openjdk-12.0.1_windows-x64_bin.zip`を解凍
-    - 以降、`C:\App\jdk-12`に解凍したと想定
-- パスを通す
-    - `Win + Pause/Break` => システム > システムの詳細 > 環境変数
-        - PATH: `C:\App\jdk-12.0.1\bin`を追加
-- コマンドプロンプトを起動し、Javaが使えるか確認
-    ```bash
-    # Javaバージョン確認
-    > java -version
-    openjdk version "12.0.1" 2019-04-16
-    OpenJDK Runtime Environment (build 12.0.1+12)
-    OpenJDK 64-Bit Server VM (build 12.0.1+12, mixed mode, sharing)
+### Installation
 
-    # Javaコンパイラのバージョン確認
-    > javac -version
-    javac 12.0.1
-    ```
+#### Installation in Ubuntu
+```bash
+# install in home directory
+$ cd ~
+
+# download julia-1.1.1
+$ wget -O - https://julialang-s3.julialang.org/bin/linux/x64/1.1/julia-1.1.1-linux-x86_64.tar.gz | tar zxvf -
+
+# export path
+$ echo '
+export PATH="$PATH:$HOME/julia-1.1.1/bin"
+' >> ~/.bashrc
+
+$ source ~/.bashrc
+
+# confirm version
+$ julia -v
+julia version 1.1.1
+```
+
+#### Installation in Windows
+管理者権限のPowerShellで以下を実行
+
+```powershell
+# chocolateyパッケージマネージャを入れていない場合は導入する
+> Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+
+# install julia
+> choco install -y julia
+
+# confirm version
+> julia -v
+julia version 1.1.1
+```
 
 ---
 
-### Scalaインストール
-chocolateyを用いてsbtをインストールする
+### Jupyter Notebook 導入
+※ Anaconda導入済みと想定
 
-- 管理者権限でPowerShell起動
-    ```powershell
-    # chocolateyインストール
-    > Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+```bash
+# install jupyter notebook
+$ conda install jupyter
 
-    # バージョン確認
-    > choco -v
-    0.10.15
+# Jupyter Notebook 用のJuliaカーネルのインストール
+$ julia -e 'using Pkg; Pkg.add("IJulia")'
 
-    # sbtインストール
-    > choco install sbt
-    ## => Do you want to run the script? というプロンプトに対しては「A」(All)と打ってOK
-    ```
-- 無事インストールされたら、`./00.perceptron`ディレクトリでPowerShellかコマンドプロンプトを起動
-    ```bash
-    # ScalaをREPL（Read Eval Print Loop）モードで起動
-    > sbt console
+# jupyter notebook のカーネルを確認
+$ jupyter kernelspec list
+Available kernels:
+  julia-1.1    /home/user/.local/share/jupyter/kernels/julia-1.1   # <- Juliaが使えるようになっている
+  python3      /home/user/miniconda3/share/jupyter/kernels/python3
 
-    ## => 初回起動時は環境構築のため少し時間がかかる
+# Jupyter Notebook 起動
+$ jupyter notebook
 
-     : (略)
-    [info] Starting scala interpreter...
-    Welcome to Scala 2.12.7 (OpenJDK 64-Bit Server VM, Java 12.0.1).
-    Type in expressions for evaluation. Or try :help.
-    ```
-- Test run: パーセプトロンを実行してみる
-    ```bash
-    # 00.perceptron.scala で定義されている Perceptronオブジェクトの executeメソッドを実行
-    scala> Perceptron.execute(List(1, 0), List(0.5, 0.5), 0.75)
-
-    # 上記の実行結果として0が返ってくればテスト成功
-    res0: Int = 0
-
-    # (':quit' | ':q') コマンドでREPL終了
-    scala> :q
-    ```
+# => localhost:8888 で Jupyter Notebook 起動
+## Juliaを使うには New > Julia 1.1.1 を選択する
+```
