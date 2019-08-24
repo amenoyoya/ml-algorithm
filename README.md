@@ -95,11 +95,6 @@ Available kernels:
   julia-1.1    /home/user/.local/share/jupyter/kernels/julia-1.1   # <- Juliaが使えるようになっている
   python3      /home/user/miniconda3/share/jupyter/kernels/python3
 
-# Jupyter Notebook で mermaid記法を使えるようにするエクステンションを導入
-$ pip install --update ipython
-$ pip install jupyter-pip
-$ pip install nb-mermaid
-
 # Jupyter Notebook 起動
 $ jupyter notebook
 
