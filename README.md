@@ -101,3 +101,22 @@ $ jupyter notebook
 # => localhost:8888 で Jupyter Notebook 起動
 ## Juliaを使うには New > Julia 1.1.1 を選択する
 ```
+
+---
+
+### 機械学習用パッケージ導入
+※ Anaconda導入済みと想定
+
+```bash
+# install ScikitLearn
+$ conda install scikit-learn
+
+# install Julia PyCall package
+$ julia -e 'using Pkg; Pkg.add("PyCall")'
+
+# install Julia ScikitLearn bundled package
+$ julia -e 'using Pkg; Pkg.add("ScikitLearn")'
+
+# install Julia DataFrames package
+$ julia -e 'using Pkg; Pkg.add("DataFrames")'
+```
