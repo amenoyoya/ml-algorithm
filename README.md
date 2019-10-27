@@ -108,8 +108,8 @@ $ jupyter notebook
 ※ Anaconda導入済みと想定
 
 ```bash
-# install ScikitLearn
-$ conda install scikit-learn
+# install ScikitLearn, matplotlib
+$ conda install scikit-learn matplotlib
 
 # install Julia PyCall package
 $ julia -e 'using Pkg; Pkg.add("PyCall")'
@@ -119,4 +119,7 @@ $ julia -e 'using Pkg; Pkg.add("ScikitLearn")'
 
 # install Julia DataFrames package
 $ julia -e 'using Pkg; Pkg.add("DataFrames")'
+
+# install Julia matplotlib bundled package
+$ julia -e 'using Pkg; Pkg.add("PyPlot")'
 ```
