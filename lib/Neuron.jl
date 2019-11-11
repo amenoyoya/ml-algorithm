@@ -29,10 +29,10 @@ predict(network::Network, h, σ, x::Array{Float64,2}, i::Int=1)::Array{Float64,2
 """ 活性化関数 """
 
 # バッチ対応版シグモイド関数
-sigmoid(a::Array{Float64,2})::Array{Float64,2} = reshape(vcat(
-        [1 ./ (1 .+ exp.(-a[row, :])) for row in 1:size(a, 1)]...
-    ), size(a, 1), size(a, 2)
-)
+sigmoid(a::Array{Float64,2})::Array{Float64,2} = hcat(
+    [1 ./ (1 .+ exp.(-a[row, :])) for row in 1:size(a, 1)]...
+)'
+
 
 # バッチ対応版ソフトマックス関数
 softmax(a::Array{Float64,2})::Array{Float64,2} = begin
@@ -42,7 +42,7 @@ softmax(a::Array{Float64,2})::Array{Float64,2} = begin
         exp_a = exp.(a[row, :] .- c) # オーバフロー対策
         push!(y, exp_a ./ sum(exp_a))
     end
-    reshape(vcat(y...), size(a, 1), size(a, 2))
+    hcat(y...)'
 end
 
 
