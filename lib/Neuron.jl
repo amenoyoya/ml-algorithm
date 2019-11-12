@@ -24,34 +24,3 @@ forward(network::Network, i::Int, h, x::Array{Float64,2})::Array{Float64,2} =
 ## Network構造体, 中間層の活性化関数, 出力層の活性化関数, 入力信号, 層番号=1 -> 出力信号 y
 predict(network::Network, h, σ, x::Array{Float64,2}, i::Int=1)::Array{Float64,2} = 
     i == network.l ? forward(network, i, σ, x) : predict(network, h, σ, forward(network, i, h, x), i + 1)
-
-
-""" 活性化関数 """
-
-# バッチ対応版シグモイド関数
-sigmoid(a::Array{Float64,2})::Array{Float64,2} = hcat(
-    [1 ./ (1 .+ exp.(-a[row, :])) for row in 1:size(a, 1)]...
-)'
-
-
-# バッチ対応版ソフトマックス関数
-softmax(a::Array{Float64,2})::Array{Float64,2} = begin
-    y = []
-    for row in 1:size(a, 1)
-        c = maximum(a[row, :])
-        exp_a = exp.(a[row, :] .- c) # オーバフロー対策
-        push!(y, exp_a ./ sum(exp_a))
-    end
-    hcat(y...)'
-end
-
-
-""" 損失関数 """
-
-# 2乗和誤差
-## Float64行列 予測値, Float64行列 正解値 -> Float64 誤差
-mean_squared_error(y::Array{Float64,2}, t::Array{Float64,2})::Float64 = 0.5 * sum((y - t).^2)
-
-# 交差エントロピー誤差
-## ln(0) = -Inf が発生するのを防ぐため、予測値に微小な値（10^-7）を加算して計算する
-cross_entropy_error(y::Array{Float64,2}, t::Array{Float64,2})::Float64 = -sum(t .* log.(y .+ 1e-7))
