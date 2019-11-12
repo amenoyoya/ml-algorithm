@@ -52,6 +52,7 @@ mean_squared_error(y::Array{Float64,2}, t::Array{Float64,2})::Float64 = 0.5 * su
 cross_entropy_error(y::Array{Float64,1}, t::Array{Float64,1})::Float64 = begin
     # 教師データ: one-hot-vectorを想定 => 正解ラベルのindexのみ計算
     val, index = findmax(t) # 正解ラベル = 最大値(=1.0)のindex
+    # ln(0) = -Inf が発生するのを防ぐため、予測値に微小な値（10^-7）を加算して計算する
     -log(y[index] .+ 1e-7)
 end
 
