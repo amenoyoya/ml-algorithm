@@ -31,12 +31,12 @@ Juliaを使い、機械学習の基礎的なアルゴリズムを実装するプ
 
 ### Environment
 - OS:
-    - Ubuntu 18.04 LTS
-    - Windows 10 Pro
+    - Ubuntu 18.04
+    - Windows 10
 - Jupyter Notebook: `4.4.0`
     - Anaconda: `4.5.11`
         - Python: `3.7.4`
-- Julia: `1.1.1`
+- Julia: `1.3.0`
 
 ---
 
@@ -47,19 +47,16 @@ Juliaを使い、機械学習の基礎的なアルゴリズムを実装するプ
 # install in home directory
 $ cd ~
 
-# download julia-1.1.1
-$ wget -O - https://julialang-s3.julialang.org/bin/linux/x64/1.1/julia-1.1.1-linux-x86_64.tar.gz | tar zxvf -
+# download julia-1.3.0
+$ wget -O - https://julialang-s3.julialang.org/bin/linux/x64/1.3/julia-1.3.0-linux-x86_64.tar.gz | tar zxvf -
 
 # export path
-$ echo '
-export PATH="$PATH:$HOME/julia-1.1.1/bin"
-' >> ~/.bashrc
-
-$ source ~/.bashrc
+## /usr/local/bin/ に julia 実行ファイルのシンボリックを作成
+$ sudo ln -s ~/julia-1.3.0/bin/julia /usr/local/bin/julia
 
 # confirm version
 $ julia -v
-julia version 1.1.1
+julia version 1.3.0
 ```
 
 #### Installation in Windows
@@ -74,7 +71,19 @@ julia version 1.1.1
 
 # confirm version
 > julia -v
-julia version 1.1.1
+julia version 1.3.0
+```
+
+---
+
+### Julia でよく使うパッケージを導入
+- HTTP:
+    - HTTP通信を行うためのパッケージ
+- DataFrames:
+    - データフレームを扱うためのパッケージ
+
+```bash
+$ julia -e 'using Pkg; Pkg.add("HTTP"); Pkg.add("DataFrames")'
 ```
 
 ---
@@ -87,19 +96,19 @@ julia version 1.1.1
 $ conda install jupyter
 
 # Jupyter Notebook 用のJuliaカーネルのインストール
-$ julia -e 'using Pkg; Pkg.add("IJulia")'
+$ julia -e 'using Pkg; Pkg.add("IJulia"); Pkg.build("IJulia")'
 
 # jupyter notebook のカーネルを確認
 $ jupyter kernelspec list
 Available kernels:
-  julia-1.1    /home/user/.local/share/jupyter/kernels/julia-1.1   # <- Juliaが使えるようになっている
+  julia-1.3    /home/user/.local/share/jupyter/kernels/julia-1.3   # <- Juliaが使えるようになっている
   python3      /home/user/miniconda3/share/jupyter/kernels/python3
 
 # Jupyter Notebook 起動
 $ jupyter notebook
 
 # => localhost:8888 で Jupyter Notebook 起動
-## Juliaを使うには New > Julia 1.1.1 を選択する
+## Juliaを使うには New > Julia 1.3.0 を選択する
 ```
 
 ---
@@ -117,9 +126,9 @@ $ julia -e 'using Pkg; Pkg.add("PyCall")'
 # install Julia ScikitLearn bundled package
 $ julia -e 'using Pkg; Pkg.add("ScikitLearn")'
 
-# install Julia DataFrames package
-$ julia -e 'using Pkg; Pkg.add("DataFrames")'
-
 # install Julia matplotlib bundled package
 $ julia -e 'using Pkg; Pkg.add("PyPlot")'
+
+# install Julia MachineLeaning Datasets package
+$ julia -e 'using Pkg; Pkg.add("MLDatasets")'
 ```
