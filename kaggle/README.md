@@ -62,9 +62,24 @@ Notebook形式の Kernel を作ると以下のような画面になるはずで�
 
 右側の「Settings」メニューから、Kernel の公開状態や使用言語、GPUなどを変更することができる
 
+なお、GPUを使いたい場合は電話番号認証が必要である
+
+### 電話番号認証
+GPUが使えないと遅すぎて使い物にならないため、電話番号認証をしておく
+
+「Requires phone validation」をクリックし、電話番号を入力する
+
+![kaggle-phone-validation.png](./img/kaggle-phone-validation.png)
+
+SMSでコード（数字）が送られてくるため、それを入力して「Verify」する
+
+![kaggle-code-verify.png](./img/kaggle-code-verify.png)
+
 ***
 
 ## タイタニックの生存予測
+
+実際に Kernel を用いて機械学習を行う
 
 とりあえずは、u++ さんのコード（ロジスティック回帰による分類最適化）をそのまま実行してみる
 
