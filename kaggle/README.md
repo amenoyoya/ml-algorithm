@@ -149,4 +149,17 @@ sub.to_csv("submission.csv", index=False)
 
 実行して問題なく動くようであれば、右上の「COMMIT」ボタンを押して、コミットする（コードを実際のデータに対して実行し、ソースコードと結果を保存する）
 
-データ量が多いため、コミットには結構な時間がかかる
+少し待って、無事コミットが成功したらひとまずOK
+
+![kaggle-commit.png](./img/kaggle-commit.png)
+
+### 課題の提出
+コミット結果ダイアログの「Open Version」をクリックすると、実行結果を確認することができる
+
+![kaggle-compe-submit.png](./img/kaggle-compe-submit.png)
+
+「Output」メニューから実行結果を確認し、問題なさそうであれば「Submit to Competition」で提出する
+
+すると、自分の名前がコンペのランキングに載るはずである
+
+![kaggle-compe-result.png](./img/kaggle-compe-result.png)
