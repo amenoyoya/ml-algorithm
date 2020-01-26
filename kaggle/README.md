@@ -194,6 +194,32 @@ sub.to_csv("submission.csv", index=False)
 
 データクレンジングとは、データの中から、重複や誤記、表記揺れ等を探し出し、削除や修正、正規化などを行い、データの品質を高めることを指す
 
+#### 実装: データ読み込み
+今回の場合、データ読み込み工程にあたるのは以下のコードである
+
+```python
+import numpy as np # NumPy: 数値計算ライブラリ
+import pandas as pd # Pandas: データフレームライブラリ
+
+# 訓練用データの読み込み
+train = pd.read_csv("../input/titanic/train.csv")
+
+# 検証用データの読み込み
+test = pd.read_csv("../input/titanic/test.csv")
+```
+
+最初の2行で NumPy と Pandas というライブラリを読み込んでいる
+
+NumPy は Python 用の数値計算ライブラリであり、ベクトル計算や微分計算など、機械学習に有用な関数やクラスが詰め込まれている
+
+実は数値計算が苦手な言語である Python が、機械学習分野においてこれほどに流行したのは、NumPy という秀逸なライブラリがあったということも大きい
+
+Pandas は行と列からなるテーブルデータを扱うのに便利なライブラリである
+
+今回のデータはテーブルデータであるため、Pandas を使って CSV ファイルから読み込みを行っている
+
+---
+
 ### 特徴量エンジニアリング
 特徴量とは、学習の入力に使う測定可能な特性のことである
 
@@ -207,7 +233,7 @@ sub.to_csv("submission.csv", index=False)
 
 ![dataframe_head.png](./img/dataframe_head.png)
 
-このようにインタラクティブにデータを確認しながら、特徴量エンジニアリングを行っていくが、基本的には以下の流れで作業を行う
+このようにインタラクティブにデータを確認しながら、以下のような流れで特徴量エンジニアリングを行っていく
 
 1. 特徴量選択
 2. 数値エンコーディング
@@ -229,16 +255,16 @@ sub.to_csv("submission.csv", index=False)
 - Cabin: 部屋番号
 - Embarked: 乗船港（"Cherbourg" | "Queenstown" | "Southampton"）
 
-上記のうち、Survived（聖俗したかどうか）が予測したい変数（目的変数）である
+上記のうち、Survived（生存したかどうか）が予測したい変数（目的変数）である
 
 この目的変数に影響を与えそうな変数を選択することを**特徴量変数**と呼ぶ
 
-例えば、乗客IDは明らかに、生存するかしないかには関係しないため除外する
+例えば、乗客IDは明らかに、生存するかしないかには関係しないため除外する、という具合である
 
-その他の変数に関しては、特徴量として採用するかどうかは、仮説に基づいて選択することになる
+各変数を特徴量として採用するかどうかは、仮説に基づいて選択することになる
 
 #### 数値エンコーディング
-基本的に機械学習モデルは、数値データを取り扱う（数値データでないと微分を使った最適化を行うことができない）
+基本的に機械学習モデルは、数値データを取り扱う（数値データでないと最適化を行うことができない）
 
 そのため、文字列として表記されているデータなどは、何らかの形で数値表現に変換する必要がある
 
@@ -253,6 +279,49 @@ sub.to_csv("submission.csv", index=False)
 
 単純にゼロ埋めするのか、そろっている値の平均値で埋めるのか、など、試行錯誤する必要がある
 
+#### 実装: 特徴量エンジニアリング
+今回、特徴量エンジニアリングの工程にあたるのは以下のコードである
+
+データをどのように加工しているかはコメントの通りであるが、実際に Kernel 上でデータの中身を確認しながら動かすと、より分かりやすいと考える
+
+```python
+# 訓練・検証用データを合成
+data = pd.concat([train, test], sort=False)
+
+# Sex: male => 0, female => 1
+data['Sex'].replace(['male','female'], [0, 1], inplace=True)
+
+# Embarked: 欠損値を S で埋め、S => 0, C => 1, Q => 2 に変換 
+data['Embarked'].fillna(('S'), inplace=True)
+data['Embarked'] = data['Embarked'].map( {'S': 0, 'C': 1, 'Q': 2} ).astype(int)
+
+# Fare: 欠損データを平均値で埋める
+data['Fare'].fillna(np.mean(data['Fare']), inplace=True)
+
+# Age: 欠損データを (平均値±標準偏差) で埋める
+age_avg = data['Age'].mean()
+age_std = data['Age'].std()
+data['Age'].fillna(np.random.randint(age_avg - age_std, age_avg + age_std), inplace=True)
+
+# 今回、特徴量として Name, PassengerId, SibSp, Parch, Ticket, Cabin は使わないことにする
+delete_columns = ['Name', 'PassengerId', 'SibSp', 'Parch', 'Ticket', 'Cabin']
+data.drop(delete_columns, axis=1, inplace=True)
+
+train_data = data[:len(train)]
+test_data = data[len(train):]
+
+# 教師データ: 訓練用データの `Survived` (生存したか否か) カラム
+y_train = train_data['Survived']
+
+# 特徴量データ: 訓練用データから `Surviced` カラムを抜いたもの
+X_train = train_data.drop('Survived', axis=1)
+X_test = test_data.drop('Survived', axis=1)
+```
+
+なお、最初に訓練用データと検証用データを合成しているのは、データ加工をまとめて行いたかったからである
+
+---
+
 ### モデルの訓練（学習）
 この工程が、いわゆる「機械学習」の工程である
 
@@ -266,9 +335,55 @@ sub.to_csv("submission.csv", index=False)
 
 - 参考: [05_back_propagation.ipynb](../05_back_propagation.ipynb)
 
+#### 実装: モデルの訓練
+今回は、ロジスティック回帰モデルを採用した
+
+ロジスティック回帰は以下の数式で表され、「回帰」という名前にも関わらず、回帰問題ではなく分類問題で使用されるアルゴリズムである
+
+$$
+    y = \frac{1}{1 + \exp[-(b_0 + \sum^i (b_i \times x_i))]}
+$$
+
+なお、$y$ が目的変数、$x_i$ が各説明変数（特徴量）、$b_i$ が偏回帰係数である
+
+ロジスティック回帰モデルの学習では、この偏回帰係数というパラメータを最適化することになる
+
+```python
+from sklearn.linear_model import LogisticRegression
+
+clf = LogisticRegression(penalty='l2', solver="sag", random_state=0)
+clf.fit(X_train, y_train)
+```
+
+ScikitLearn というライブラリを使うと `fit` メソッド一発でモデルの最適化が可能なため非常に便利である
+
+---
+
 ### モデルの評価
 モデルの訓練（学習）が完了したら、検証用データを用いて、未知のデータに対する予測精度を評価する
 
 この精度が良くなければ、モデルの再構築を行う、特徴量を選択しなおす、ハイパーパラメータを調整する等の試行錯誤を行うことになる
 
 とにかく機械学習とは、試行錯誤の連続であり、非常に泥臭い作業であると言える
+
+#### 実装: モデルの評価
+今回は、学習済みのモデルによる予測結果を Kaggle コンペに提出するところまで実装している
+
+提出は基本的には、コンペ指定のフォーマットでファイルを作成するだけで良い
+
+```python
+# 最適化したソルバで検証データの生存予測
+y_pred = clf.predict(X_test)
+
+# コンペ提出用データの読み込み
+gender_submission = pd.read_csv('../input/titanic/gender_submission.csv')
+sub = gender_submission
+
+# 最適化ソルバーの予測結果を `Survived` カラムにマッピング
+sub['Survived'] = list(map(int, y_pred))
+
+# 課題提出: ファイル名は任意でよい
+sub.to_csv('submission.csv', index=False)
+```
+
+今回は、コンペ提出様式（`gender_submission.csv`）を読み込んで使っているが、提出データ様式をちゃんと理解できているのであれば、どのようにデータを生成しても構わない
