@@ -163,3 +163,5 @@ sub.to_csv("submission.csv", index=False)
 すると、自分の名前がコンペのランキングに載るはずである
 
 ![kaggle-compe-result.png](./img/kaggle-compe-result.png)
+
+結果は、予測精度 66.985 % でかなり下の方のランキングであった
