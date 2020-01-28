@@ -106,3 +106,95 @@ sub.to_csv("submission_xgb.csv", index=False)
 このように、モデルをロジスティック回帰から GBDT（XGBoost）に変えるだけでも、性能は大きく向上することがある
 
 各学習モデルの長所・短所を知り、どういったデータに対してはどのようなモデルが適しているのか、よく理解することが重要である
+
+***
+
+## モデルの評価
+
+モデルを作成する主な目的は、未知のデータに対して予測を行うことであるため、未知のデータに対する予測性能を評価する方法が必要である
+
+一般には、訓練用データを学習に用いるデータを評価用データに分け、評価用データへの予測精度を何らかの評価指標によるスコアで表すことによって評価する
+
+この作業を**バリデーション**と呼ぶ
+
+分析コンペでは様々な特徴量を作り、それが予測に有用かどうか、試行錯誤しながら良いモデルを求めていくことになる
+
+このとき、正しくバリデーションが行えていないと、どの特徴量を採用するのが良いか進むべき方向が分からなくなってしまう
+
+### クロスバリデーション
+バリデーションを行う方法はいくつかあるが、よく使用されるのは**クロスバリデーション**と呼ばれる手法である
+
+クロスバリデーションは、データを複数のブロックに分け、内1つを評価用データ、残りを学習用データとしてバリデーションを行う、という操作を、評価用データを入れ替えながら繰り返す方法である
+
+![cross_validation.png](./img/cross_validation.png)
+
+### クロスバリデーションの実装
+ScikitLearn にはクロスバリデーション用の便利なクラスとして `KFold` が用意されているため、今回はこれを使う
+
+```python
+# データの読み込み～特徴量エンジニアリングは省略
+
+'''
+クロスバリデーションによるモデル評価
+'''
+from sklearn.metrics import log_loss, accuracy_score
+from sklearn.model_selection import KFold
+from xgboost import XGBClassifier
+
+# KFold を使って、クロスバリデーションを行うための fold 配列を作成する
+## n_splits: 学習データの分割数（今回は4ブロックに分けて、内1ブロックを検証に用いるバリデーションを繰り返す）
+## shuffle: True にすると学習データをシャッフルして、より均一な予測精度を得ることができる
+## random_state: 学習データシャッフル時の乱数シードを指定
+kf = KFold(n_splits=4, shuffle=True, random_state=71)
+
+# 各 fold のスコアを保存するリスト
+scores_accuracy = [] # accuracy: 正解率
+scores_logloss = []  # logloss: 予測誤差
+
+# XGBoostモデルで分類モデルの最適化
+## fold ごとにモデルの訓練を行うため、関数化する
+def train(train_x, train_y):
+    model = XGBClassifier(n_estimators=20, random_state=71)
+    model.fit(train_x, train_y)
+    return model
+
+# クロスバリデーションによるモデル評価
+for train_idx, valid_idx in kf.split(train_x):
+    # 学習データを学習データと評価データに分ける
+    tr_x, va_x = train_x.iloc[train_idx], train_x.iloc[valid_idx]
+    tr_y, va_y = train_y.iloc[train_idx], train_y.iloc[valid_idx]
+    
+    # モデル最適化
+    model = train(tr_x, tr_y)
+    
+    # 評価データを用いて最適化モデルによる予測を実行
+    va_pred = model.predict_proba(va_x)[:, 1]
+    
+    # モデル精度のスコア計算
+    logloss = log_loss(va_y, va_pred) # 予測値の正解値からの誤差を計算
+    accuracy = accuracy_score(va_y, va_pred > 0.5) # 予測値（確率）が 0.5 を超えている場合を 1（生存）として正解率を計算
+    
+    # fold ごとのスコアを保持
+    scores_logloss.append(logloss)
+    scores_accuracy.append(accuracy)
+
+# スコアの平均値を求めることでモデルの制度を評価する
+logloss = np.mean(scores_logloss)
+accuracy = np.mean(scores_accuracy)
+print(f'logloss: {logloss:.4f}, accuracy: {accuracy:.4f}')
+```
+
+```bash
+# OUTPUT
+logloss: 0.4270, accuracy: 0.8148
+```
+
+結果として、正解率は 81.48 % となった
+
+課題の未知データに対する精度が 77.99 % だったことを考えると、やや高い精度になっているが、これは一部の学習データと評価データが重複していることにより微妙な過学習が起こってしまうためである
+
+そのため、クロスバリデーションによる評価は、基本的に実際の予測精度よりも良く評価されがちである
+
+クロスバリデーションによる評価を実際の予測精度に近づけるためには、学習データを大量に揃えることが必要になる
+
+とは言え、今回くらいの評価誤差であれば、許容範囲と言っても良い（77.99 % と 81.48 % 程度の差で、大まかにいえば 8割程度の予測精度を持つと評価することが可能であるため）
