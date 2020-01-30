@@ -198,3 +198,114 @@ logloss: 0.4270, accuracy: 0.8148
 クロスバリデーションによる評価を実際の予測精度に近づけるためには、学習データを大量に揃えることが必要になる
 
 とは言え、今回くらいの評価誤差であれば、許容範囲と言っても良い（77.99 % と 81.48 % 程度の差で、大まかにいえば 8割程度の予測精度を持つと評価することが可能であるため）
+
+***
+
+## モデルのチューニング
+
+機械学習モデルには、学習前に手動で指定し、学習の方法や速度、複雑性などを定めるパラメータとして**ハイパーパラメータ**がある
+
+このハイパーパラメータが最適でない場合は、モデルのポテンシャルを十分に発揮できないことがあるため、チューニングを行う必要がある
+
+（参考: https://github.com/amenoyoya/ml-algorithm/blob/master/03_loss_function.ipynb）
+
+### グリッドサーチによるチューニング
+チューニング対象のハイパーパラメータのすべての組み合わせについて探索を行い、最もスコアが高いものを採用する方法を**グリッドサーチ**と呼ぶ（総当たり手法）
+
+XGBoostには `max_depth`, `min_child_weight` というハイパーパラメータがあるため、グリッドサーチを用いてこれらのパラメータを最適化してみる
+
+#### 実装
+```python
+# データ読み込み～特徴量エンジニアリングは省略
+
+'''
+グリッドサーチによるハイパーパラメータのチューニング
+'''
+from sklearn.metrics import log_loss, accuracy_score
+from sklearn.model_selection import KFold
+from xgboost import XGBClassifier
+import itertools
+
+# XGBoostモデルで分類モデルの最適化
+def train(train_x, train_y, max_depth, min_child_weight):
+    model = XGBClassifier(
+        n_estimators=20, random_state=71,
+        max_depth=max_depth, min_child_weight=min_child_weight
+    )
+    model.fit(train_x, train_y)
+    return model
+
+# クロスバリデーション
+def cross_validate(train_x, train_y, max_depth, min_child_weight):
+    scores_logloss = []
+    scores_accuracy = []
+    kf = KFold(n_splits=4, shuffle=True, random_state=123456)
+    for train_idx, valid_idx in kf.split(train_x):
+        # 学習データを学習データと評価データに分ける
+        tr_x, va_x = train_x.iloc[train_idx], train_x.iloc[valid_idx]
+        tr_y, va_y = train_y.iloc[train_idx], train_y.iloc[valid_idx]
+        # モデル最適化
+        model = train(tr_x, tr_y, max_depth, min_child_weight)
+        # モデル精度のスコア計算
+        va_pred = model.predict_proba(va_x)[:, 1]
+        logloss = log_loss(va_y, va_pred) # 予測値の正解値からの誤差を計算
+        accuracy = accuracy_score(va_y, va_pred > 0.5) # 予測値（確率）が 0.5 を超えている場合を 1（生存）として正解率を計算
+        # fold ごとのスコアを保持
+        scores_logloss.append(logloss)
+        scores_accuracy.append(accuracy)
+    return scores_logloss, scores_accuracy
+
+# チューニング候補とするパラメータを準備
+param_space = {
+    'max_depth': [3, 5, 7],
+    'min_child_weight': [1.0, 2.0, 4.0]
+}
+
+# パラメータの組み合わせを作成
+param_combinations = itertools.product(param_space['max_depth'], param_space['min_child_weight'])
+
+# パラメータの組み合わせとそのスコアを保持するリスト
+params = []
+scores = []
+
+# 各パラメータの組み合わせごとにクロスバリデーションによる評価を実行
+for max_depth, min_child_weight in param_combinations:
+    scores_logloss, scores_accuracy = cross_validate(train_x, train_y, max_depth, min_child_weight)
+    # 各foldのスコア（logloss）を平均し、それを保持する
+    score = np.mean(scores_logloss)
+    params.append((max_depth, min_child_weight))
+    scores.append(score)
+
+# 最もスコアが良いものを最適パラメータとする
+best_idx = np.argsort(scores)[0]
+best_param = params[best_idx]
+print(f'max_depth: {best_param[0]}, min_child_weight: {best_param[1]}')
+```
+
+結果、`max_depth: 7, min_child_weight: 2.0` が、ハイパーパラメータの最適な組み合わせであることが分かった
+
+そのため、このハイパーパラメータの組み合わせで訓練したモデルを提出することにする
+
+```python
+# モデル最適化: ハイパーパラメータの組み合わせ = (7, 2.0)
+model = train(train_x, train_y, 7, 2.0)
+
+# 最適化したモデルで検証データの生存予測
+pred = model.predict_proba(test_x)[:, 1]
+
+# 予測結果を二値変換
+pred_label = np.where(pred > 0.5, 1, 0)
+
+# 提出用ファイルの作成
+sub = pd.DataFrame({
+    'PassengerId': test['PassengerId'],
+    'Survived': pred_label
+})
+sub.to_csv("submission_xgb.csv", index=False)
+```
+
+なお、このモデルでは、精度 76.076 % となり、若干精度が下がってしまった
+
+従って、最適パラメータは他にあることになる
+
+グリッドサーチでは、自分でパラメータの候補を選定しなければならないため、結局は地道に探していかなければ最適パラメータを求めることはできないということである
