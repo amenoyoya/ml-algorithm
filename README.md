@@ -1,5 +1,7 @@
 # 一から学ぶ機械学習アルゴリズム
 
+⚡ This repository is archived, and has migrated into [amenoyoya/julia-tuto.git](https://github.com/amenoyoya/julia-tuto).
+
 ## What's this?
 
 Juliaを使い、機械学習の基礎的なアルゴリズムを実装するプロジェクト
